@@ -1,0 +1,264 @@
+🔥 Master Prompt for AI Agent / Developer to Build Enterprise-Grade BOQ Billing App (MERN)
+Overview
+
+Build a fully-featured, SaaS-ready BOQ Billing Application with:
+
+MERN stack (MongoDB, Express, React, Node.js)
+
+Local MongoDB for now, scalable to production & multi-tenant later
+
+Admin and User routes, no authentication for now
+
+Dynamic, customizable billing templates with drag/drop fields
+
+Nested categories and products with full CRUD
+
+Real-time autosave, draft/finalize bills, PDF/Excel/CSV export
+
+Company branding and highly configurable PDF layout
+
+Status tags, payment tracking, notifications, analytics
+
+Responsive, professional UI/UX using Tailwind CSS
+
+Key Deliverables & Goals
+
+Backend API: RESTful, modular, secure, scalable
+
+Database: Properly normalized schemas, tenant-scoped, with indexing
+
+Admin Panel: Full control over companies, templates, fields, categories, products, branding, PDF layout
+
+User Panel: Easy, fast billing, auto-fill, autosave, search/filter, export
+
+Extras: Notifications, bill versioning, analytics, backups
+
+Step-by-Step Implementation Plan
+PHASE 1: PROJECT SETUP & BACKEND
+
+Initialize Project Structure
+
+Use npm init for backend and frontend separately
+
+Setup backend with Express + Mongoose
+
+Setup React frontend with Create React App or Vite + Tailwind CSS
+
+Connect to Local MongoDB
+
+Use local MongoDB URI (mongodb://localhost:27017/boq-billing)
+
+Setup connection with Mongoose and handle errors
+
+Define MongoDB Schemas & Models
+Create models with proper relationships and indexing for:
+
+Company (name, logo, branding, PDF layout config)
+
+Category (nested tree structure with parent refs)
+
+Product (name, categoryId, unit, rate, GST, etc.)
+
+BillTemplate (name, companyId, array of dynamic fields)
+
+FieldDefinition (field name, type, required, order, custom formula if any)
+
+Bill (companyId, customer info, items, status tags, totals, created/updated timestamps)
+
+Draft (similar to Bill, autosave purpose)
+
+Notifications (type, message, status, timestamps)
+
+Payments (linked to bills for paid/partial status)
+
+Implement CRUD REST API Endpoints
+
+Companies: create/read/update/delete, upload logo (multipart/form-data)
+
+Categories & Products: nested categories CRUD, product CRUD
+
+Bill Templates & Fields: dynamic fields CRUD with drag/drop order saved
+
+Bills & Drafts: create/update/finalize, autosave draft, status updates
+
+Notifications: create/read/update (basic)
+
+Payments: add/view payments linked to bills
+
+Implement Global Search Endpoint
+
+Search across bills, products, customers (if added later) with filters
+
+Setup Basic Middleware & Error Handling
+
+Validate requests, sanitize inputs
+
+Consistent API response format
+
+PHASE 2: ADMIN FRONTEND
+
+Setup React Routing & Layout
+
+Admin dashboard layout with sidebar, header, main content area
+
+Responsive design with Tailwind CSS
+
+Company Profile Management UI
+
+Form to edit company name, upload logo, set branding colors/fonts
+
+PDF layout designer UI: drag-drop logo, bill title, fields, totals sections
+
+Settings saved to backend, live preview of layout
+
+Category & Product Management
+
+Tree view for nested categories with expand/collapse
+
+CRUD UI for categories & products (name, unit, rate, GST, etc.)
+
+Search, filter, and sort for products
+
+Bill Template Builder
+
+Create/Edit/Delete bill templates per company
+
+Add dynamic fields: text, number, dropdown, date, checkbox
+
+Mark fields required/optional, reorder via drag-and-drop
+
+Add custom formulas for calculated fields (qty * rate, tax calc)
+
+Preview template layout
+
+Notifications & Analytics UI
+
+View reminders, alerts about drafts, payments, overdue bills
+
+Dashboard charts: revenue, top products, GST collected
+
+Use charting library like Recharts or Chart.js
+
+PHASE 3: USER FRONTEND (Billing Interface)
+
+Select Bill Template & Company Branding
+
+Dropdown to select bill template
+
+Apply company branding (logo, colors) on screen
+
+Billing Form
+
+Dynamically generate form based on selected template fields
+
+Inline editable line items table + modal item entry toggle
+
+Auto-fill product info when selected from product list
+
+Real-time calculation of totals and GST based on formulas
+
+Status tags (Draft, Finalized, Paid, etc.) with manual update option
+
+Autosave & Draft Management
+
+Autosave every 5-10 seconds to draft collection
+
+Ability to manually save draft or finalize bill
+
+List of previous bills and drafts with search/filter
+
+Export Options
+
+Export current bill as PDF, Excel, CSV
+
+PDF export respects company PDF layout design and branding
+
+Use jsPDF for PDF, SheetJS for Excel, csv-writer for CSV
+
+PHASE 4: ADDITIONAL FEATURES & POLISH
+
+Reminders & Notifications System
+
+Create backend scheduler (optional, for future)
+
+Show notifications in UI for unpaid bills, drafts left idle, etc.
+
+Data Backup and Restore
+
+Allow export/import of all company data in JSON/Excel format
+
+Backup/restore buttons in admin panel
+
+Performance & Security
+
+Optimize database queries with indexing
+
+Input validation and sanitization to prevent injection
+
+Rate limiting (optional for future)
+
+Testing & Documentation
+
+Unit and integration tests for API and critical components
+
+Document API endpoints with Swagger or Postman collections
+
+Write README with setup and usage instructions
+
+Best Practices to Follow
+
+Modularize code: Keep API routes, controllers, models, and frontend components clean and separated
+
+Error handling: Provide clear messages to users and logs to devs
+
+Responsive UI: Test on mobile/tablet/desktop, use CSS grid & flexbox effectively
+
+Version control: Use git with clear commit messages, branches for features
+
+Environment variables: Keep sensitive data out of codebase
+
+Scalability in mind: Write clean, maintainable, and well-commented code
+
+Deliverables After Each Step
+
+Commit code to git repository with clear description
+
+Deploy locally with instructions
+
+Share API documentation
+
+Provide demo screenshots or screen recording
+
+Communication Protocol with AI Agent / Developers
+
+Always confirm requirements before implementing new features
+
+Break down tasks into small, manageable units
+
+Provide code snippets with explanations
+
+Ask clarifying questions proactively if something is ambiguous
+
+Share progress frequently with working demos
+
+Prioritize core features first, then polish & extras
+
+Summary
+
+This blueprint will help build an ultra-professional BOQ billing app with:
+
+Dynamic billing templates
+
+Multi-company support
+
+Realtime user-friendly billing
+
+Comprehensive admin control
+
+Export & analytics capabilities
+
+If you want, I can start by generating the folder structure + backend models + API skeleton right now. Just say:
+
+🚀 start
+
+And I’ll proceed step by step, explaining everything.
