@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
@@ -16,6 +16,7 @@ import CompanyList from './pages/admin/CompanyList';
 import CategoryList from './pages/admin/CategoryList';
 import ProductList from './pages/admin/ProductList';
 import TemplateList from './pages/admin/TemplateList';
+import PricingList from './pages/admin/PricingList';
 
 // User Pages
 import UserDashboard from './pages/user/Dashboard';
@@ -30,38 +31,37 @@ import Register from './pages/auth/Register';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* User Routes - Protected */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<UserLayout />}>
-              <Route index element={<UserDashboard />} />
-              <Route path="bills" element={<BillList />} />
-              <Route path="bills/create" element={<CreateBill />} />
-              <Route path="bills/:id" element={<ViewBill />} />
-            </Route>
+      <Routes>
+        {/* Auth Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        {/* User Routes - Protected */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<UserLayout />}>
+            <Route index element={<UserDashboard />} />
+            <Route path="bills" element={<BillList />} />
+            <Route path="bills/create" element={<CreateBill />} />
+            <Route path="bills/:id" element={<ViewBill />} />
           </Route>
-          
-          {/* Admin Routes - Protected and Admin Only */}
-          <Route element={<ProtectedRoute requireAdmin={true} />}>
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="companies" element={<CompanyList />} />
-              <Route path="categories" element={<CategoryList />} />
-              <Route path="products" element={<ProductList />} />
-              <Route path="templates" element={<TemplateList />} />
-            </Route>
+        </Route>
+        
+        {/* Admin Routes - Protected and Admin Only */}
+        <Route element={<ProtectedRoute requireAdmin={true} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="companies" element={<CompanyList />} />
+            <Route path="categories" element={<CategoryList />} />
+            <Route path="products" element={<ProductList />} />
+            <Route path="pricing" element={<PricingList />} />
+            <Route path="templates" element={<TemplateList />} />
           </Route>
-          
-          {/* Redirect to login for unknown routes */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-        <ToastContainer position="top-right" autoClose={3000} />
-      </Router>
+        </Route>
+        
+        {/* Redirect to login for unknown routes */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
     </AuthProvider>
   );
 }

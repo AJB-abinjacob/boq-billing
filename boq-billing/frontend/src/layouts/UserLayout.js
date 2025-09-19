@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiHome, FiFileText, FiPlus, FiSettings } from 'react-icons/fi';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { FiMenu, FiX, FiHome, FiFileText, FiPlus, FiLogOut } from 'react-icons/fi';
+import { useAuth } from '../contexts/AuthContext';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 
 const UserLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: FiHome },
@@ -15,6 +18,11 @@ const UserLayout = () => {
 
   const isActive = (path) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -52,7 +60,16 @@ const UserLayout = () => {
                 </Link>
               ))}
             </nav>
-          </div>
+            </div>
+            <div className="flex-shrink-0 flex border-t border-primary-600 p-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-2 py-2 text-sm font-medium text-white hover:bg-primary-600 rounded-md w-full"
+              >
+                <FiLogOut className="mr-3 h-5 w-5" />
+                Logout
+              </button>
+            </div>
         </div>
       </div>
 
@@ -80,6 +97,15 @@ const UserLayout = () => {
                   </Link>
                 ))}
               </nav>
+            </div>
+            <div className="flex-shrink-0 flex border-t border-primary-600 p-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-2 py-2 text-sm font-medium text-white hover:bg-primary-600 rounded-md w-full"
+              >
+                <FiLogOut className="mr-3 h-5 w-5" />
+                Logout
+              </button>
             </div>
           </div>
         </div>

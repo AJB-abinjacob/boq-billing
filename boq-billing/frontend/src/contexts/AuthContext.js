@@ -12,44 +12,28 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check if user is already logged in
-    const user = localStorage.getItem('user');
+    const user = AuthService.getCurrentUser();
     if (user) {
-      setCurrentUser(JSON.parse(user));
+      setCurrentUser(user);
     }
     setLoading(false);
   }, []);
 
   const login = async (credentials) => {
     try {
-      // For demo purposes, we'll simulate successful login
-      // In production, this would use the actual API
-      // const response = await AuthService.login(credentials);
-      
-      // Simulate successful login
-      const mockUser = {
-        id: '1',
-        email: credentials.email,
-        name: credentials.email.split('@')[0],
-        role: credentials.role
-      };
-      
-      const mockToken = 'mock-jwt-token-' + Math.random().toString(36).substring(2);
-      
-      // Store user data and token
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('token', mockToken);
-      
-      setCurrentUser(mockUser);
-      return mockUser;
+      setError(null);
+      const response = await AuthService.login(credentials);
+      setCurrentUser(response.user);
+      return response.user;
     } catch (err) {
-      setError(err.message || 'Failed to login');
-      throw err;
+      const errorMessage = err.message || 'Failed to login';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    AuthService.logout();
     setCurrentUser(null);
   };
 

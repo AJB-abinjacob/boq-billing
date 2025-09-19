@@ -1,51 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { FiEdit2, FiTrash2, FiPlus, FiChevronRight } from 'react-icons/fi';
-import Button from '../../components/Button';
+import { FiPlus, FiEdit2, FiTrash2, FiChevronRight } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import Card from '../../components/Card';
+import Button from '../../components/Button';
+import CategoryService from '../../services/categoryService';
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(null);
   const [expandedCategories, setExpandedCategories] = useState({});
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    parentCategory: '',
+    isActive: true
+  });
 
   useEffect(() => {
-    // In a real app, this would fetch from the API
-    // For now, we'll use mock data
-    setCategories([
-      { 
-        id: 1, 
-        name: 'Civil Works', 
-        description: 'All civil construction related items',
-        isActive: true,
-        parentCategory: null,
-        children: [
-          { 
-            id: 3, 
-            name: 'Concrete Works', 
-            description: 'Concrete related items',
-            isActive: true,
-            parentCategory: 1
-          },
-          { 
-            id: 4, 
-            name: 'Masonry Works', 
-            description: 'Brick and block work',
-            isActive: true,
-            parentCategory: 1
-          }
-        ]
-      },
-      { 
-        id: 2, 
-        name: 'Electrical Works', 
-        description: 'All electrical items',
-        isActive: true,
-        parentCategory: null,
-        children: []
-      }
-    ]);
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await CategoryService.getAllCategories();
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast.error('Failed to load categories. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleExpand = (categoryId) => {
     setExpandedCategories(prev => ({
@@ -54,43 +42,83 @@ const CategoryList = () => {
     }));
   };
 
-  const handleEdit = (category) => {
-    setCurrentCategory(category);
+  const handleAddNew = () => {
+    setCurrentCategory(null);
+    setFormData({
+      name: '',
+      description: '',
+      parentCategory: '',
+      isActive: true
+    });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      // In a real app, this would call the API
-      setCategories(prevCategories => 
-        prevCategories.filter(category => category.id !== id)
-          .map(category => ({
-            ...category,
-            children: category.children ? 
-              category.children.filter(child => child.id !== id) : 
-              []
-          }))
-      );
+  const handleEdit = (category) => {
+    setCurrentCategory(category);
+    setFormData({
+      name: category.name,
+      description: category.description || '',
+      parentCategory: category.parentCategory || '',
+      isActive: category.isActive
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      if (currentCategory) {
+        // Update existing category
+        await CategoryService.updateCategory(currentCategory._id, formData);
+        toast.success('Category updated successfully!');
+      } else {
+        // Create new category
+        await CategoryService.createCategory(formData);
+        toast.success('Category created successfully!');
+      }
+      
+      setIsModalOpen(false);
+      fetchCategories(); // Refresh the list
+    } catch (error) {
+      console.error('Error saving category:', error);
+      toast.error('Failed to save category. Please try again.');
     }
   };
 
-  const handleAddNew = () => {
-    setCurrentCategory(null);
-    setIsModalOpen(true);
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await CategoryService.deleteCategory(id);
+        toast.success('Category deleted successfully!');
+        fetchCategories(); // Refresh the list
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        toast.error('Failed to delete category. Please try again.');
+      }
+    }
   };
 
   const renderCategoryRow = (category, level = 0) => {
-    const isExpanded = expandedCategories[category.id];
+    const isExpanded = expandedCategories[category._id];
     const hasChildren = category.children && category.children.length > 0;
     
     return (
-      <React.Fragment key={category.id}>
+      <React.Fragment key={category._id}>
         <tr className={level > 0 ? 'bg-gray-50' : 'bg-white'}>
           <td className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
               {hasChildren && (
                 <button 
-                  onClick={() => toggleExpand(category.id)}
+                  onClick={() => toggleExpand(category._id)}
                   className="mr-2 text-gray-500 hover:text-gray-700"
                 >
                   <FiChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'transform rotate-90' : ''}`} />
@@ -119,7 +147,7 @@ const CategoryList = () => {
               <FiEdit2 className="h-5 w-5" />
             </button>
             <button
-              onClick={() => handleDelete(category.id)}
+              onClick={() => handleDelete(category._id)}
               className="text-red-600 hover:text-red-900"
             >
               <FiTrash2 className="h-5 w-5" />
@@ -172,22 +200,24 @@ const CategoryList = () => {
 
       {/* Modal would be implemented here in a real application */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               {currentCategory ? 'Edit Category' : 'Add New Category'}
             </h3>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleFormSubmit}>
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Category Name
+                  Category Name *
                 </label>
                 <input
                   type="text"
                   name="name"
                   id="name"
+                  required
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  defaultValue={currentCategory?.name || ''}
+                  value={formData.name}
+                  onChange={handleFormChange}
                 />
               </div>
               <div>
@@ -199,7 +229,8 @@ const CategoryList = () => {
                   id="description"
                   rows="3"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  defaultValue={currentCategory?.description || ''}
+                  value={formData.description}
+                  onChange={handleFormChange}
                 ></textarea>
               </div>
               <div>
@@ -210,7 +241,8 @@ const CategoryList = () => {
                   id="parentCategory"
                   name="parentCategory"
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  defaultValue={currentCategory?.parentCategory || ''}
+                  value={formData.parentCategory}
+                  onChange={handleFormChange}
                 >
                   <option value="">None (Top Level)</option>
                   {categories.map(category => (
@@ -222,6 +254,7 @@ const CategoryList = () => {
               </div>
               <div className="flex justify-end space-x-3 mt-5">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() => setIsModalOpen(false)}
                 >

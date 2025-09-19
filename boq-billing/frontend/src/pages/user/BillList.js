@@ -4,7 +4,6 @@ import { FiEye, FiDownload, FiSearch, FiFilter, FiFileText } from 'react-icons/f
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { exportBillsAsCSV } from '../../utils/pdfExport';
-import BillService from '../../services/billService';
 
 const BillList = () => {
   const [bills, setBills] = useState([]);

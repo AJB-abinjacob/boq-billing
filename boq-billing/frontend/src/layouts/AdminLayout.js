@@ -1,22 +1,31 @@
 import React, { useState } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiHome, FiUsers, FiGrid, FiPackage, FiSettings } from 'react-icons/fi';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { FiMenu, FiX, FiHome, FiUsers, FiPackage, FiFileText, FiFolder, FiLogOut, FiDollarSign } from 'react-icons/fi';
+import { useAuth } from '../contexts/AuthContext';
 import ResponsiveContainer from '../components/ResponsiveContainer';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: FiHome },
     { name: 'Companies', href: '/admin/companies', icon: FiUsers },
     { name: 'Categories', href: '/admin/categories', icon: FiFolder },
     { name: 'Products', href: '/admin/products', icon: FiPackage },
+    { name: 'Pricing', href: '/admin/pricing', icon: FiDollarSign },
     { name: 'Templates', href: '/admin/templates', icon: FiFileText },
   ];
 
   const isActive = (path) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -54,7 +63,16 @@ const AdminLayout = () => {
                 </Link>
               ))}
             </nav>
-          </div>
+            </div>
+            <div className="flex-shrink-0 flex border-t border-primary-600 p-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-2 py-2 text-sm font-medium text-white hover:bg-primary-600 rounded-md w-full"
+              >
+                <FiLogOut className="mr-3 h-5 w-5" />
+                Logout
+              </button>
+            </div>
         </div>
       </div>
 
@@ -82,6 +100,15 @@ const AdminLayout = () => {
                   </Link>
                 ))}
               </nav>
+            </div>
+            <div className="flex-shrink-0 flex border-t border-primary-600 p-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-2 py-2 text-sm font-medium text-white hover:bg-primary-600 rounded-md w-full"
+              >
+                <FiLogOut className="mr-3 h-5 w-5" />
+                Logout
+              </button>
             </div>
           </div>
         </div>

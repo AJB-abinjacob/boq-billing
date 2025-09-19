@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiUser, FiLock, FiAlertCircle } from 'react-icons/fi';
 import Button from '../../components/Button';
-import AuthService from '../../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -35,26 +34,30 @@ const Login = () => {
     }
 
     try {
-      // For demo purposes, we'll simulate successful login
-      // In production, this would use the actual API
-      // const response = await AuthService.login(formData);
-      
-      // Simulate successful login
-      const mockUser = {
-        id: '1',
-        email: formData.email,
-        name: formData.email.split('@')[0],
-        role: formData.role
-      };
-      
-      const mockToken = 'mock-jwt-token-' + Math.random().toString(36).substring(2);
-      
-      // Store user data and token
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('token', mockToken);
+      // Call the actual backend API
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.data.token);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
       
       // Redirect based on role
-      if (formData.role === 'admin') {
+      if (data.data.user.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/');
@@ -165,9 +168,9 @@ const Login = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                <button type="button" className="font-medium text-primary-600 hover:text-primary-500 bg-transparent border-none cursor-pointer" onClick={() => alert('Password reset functionality would be implemented here')}>
                   Forgot your password?
-                </a>
+                </button>
               </div>
             </div>
 
@@ -179,6 +182,18 @@ const Login = () => {
               >
                 {loading ? 'Signing in...' : 'Sign in'}
               </Button>
+            </div>
+
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link
+                  to="/register"
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
+                  Register here
+                </Link>
+              </p>
             </div>
           </form>
 

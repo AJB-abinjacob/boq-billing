@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiSearch } from 'react-icons/fi';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
+import ProductService from '../../services/productService';
+import CategoryService from '../../services/categoryService';
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -9,64 +11,51 @@ const ProductList = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // In a real app, this would fetch from the API
-    // For now, we'll use mock data
-    setProducts([
-      { 
-        id: 1, 
-        name: 'Portland Cement', 
-        description: '53 Grade OPC',
-        categoryId: 3,
-        categoryName: 'Concrete Works',
-        unit: 'Bag',
-        rate: 350,
-        gstPercentage: 18,
-        hsnCode: '2523',
-        isActive: true
-      },
-      { 
-        id: 2, 
-        name: 'Sand', 
-        description: 'River Sand',
-        categoryId: 3,
-        categoryName: 'Concrete Works',
-        unit: 'CFT',
-        rate: 45,
-        gstPercentage: 5,
-        hsnCode: '2505',
-        isActive: true
-      },
-      { 
-        id: 3, 
-        name: 'Bricks', 
-        description: 'Red Clay Bricks',
-        categoryId: 4,
-        categoryName: 'Masonry Works',
-        unit: 'Nos',
-        rate: 8,
-        gstPercentage: 5,
-        hsnCode: '6904',
-        isActive: true
-      }
-    ]);
-
-    setCategories([
-      { id: 3, name: 'Concrete Works' },
-      { id: 4, name: 'Masonry Works' }
-    ]);
+    fetchProducts();
+    fetchCategories();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await ProductService.getAllProducts();
+      setProducts(response.data || []);
+      setError('');
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError('Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await CategoryService.getAllCategories();
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const handleEdit = (product) => {
     setCurrentProduct(product);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      // In a real app, this would call the API
-      setProducts(products.filter(product => product.id !== id));
+      try {
+        await ProductService.deleteProduct(id);
+        fetchProducts(); // Refresh the list
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        setError('Failed to delete product');
+      }
     }
   };
 
@@ -75,11 +64,34 @@ const ProductList = () => {
     setIsModalOpen(true);
   };
 
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (currentProduct) {
+        await ProductService.updateProduct(currentProduct._id, formData);
+      } else {
+        await ProductService.createProduct(formData);
+      }
+      setIsModalOpen(false);
+      fetchProducts(); // Refresh the list
+    } catch (error) {
+      console.error('Error saving product:', error);
+      setError('Failed to save product');
+    }
+  };
+
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.categoryName && product.categoryName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -89,6 +101,12 @@ const ProductList = () => {
           <FiPlus className="mr-2" /> Add Product
         </Button>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
 
       <div className="mb-6">
         <div className="relative rounded-md shadow-sm">
@@ -135,7 +153,7 @@ const ProductList = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProducts.map((product) => (
-                <tr key={product.id}>
+                <tr key={product._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{product.name}</div>
                     <div className="text-sm text-gray-500">{product.description}</div>
@@ -167,7 +185,7 @@ const ProductList = () => {
                       <FiEdit2 className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => handleDelete(product._id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       <FiTrash2 className="h-5 w-5" />
@@ -180,122 +198,188 @@ const ProductList = () => {
         </div>
       </Card>
 
-      {/* Modal would be implemented here in a real application */}
+      {/* Product Modal Component */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-lg w-full p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              {currentProduct ? 'Edit Product' : 'Add New Product'}
-            </h3>
-            <form className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Product Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    defaultValue={currentProduct?.name || ''}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                    Category
-                  </label>
-                  <select
-                    id="category"
-                    name="category"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    defaultValue={currentProduct?.categoryId || ''}
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
-                    Unit
-                  </label>
-                  <input
-                    type="text"
-                    name="unit"
-                    id="unit"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    defaultValue={currentProduct?.unit || ''}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="rate" className="block text-sm font-medium text-gray-700">
-                    Rate (₹)
-                  </label>
-                  <input
-                    type="number"
-                    name="rate"
-                    id="rate"
-                    step="0.01"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    defaultValue={currentProduct?.rate || ''}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="gst" className="block text-sm font-medium text-gray-700">
-                    GST %
-                  </label>
-                  <input
-                    type="number"
-                    name="gst"
-                    id="gst"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    defaultValue={currentProduct?.gstPercentage || ''}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="hsnCode" className="block text-sm font-medium text-gray-700">
-                    HSN Code
-                  </label>
-                  <input
-                    type="text"
-                    name="hsnCode"
-                    id="hsnCode"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    defaultValue={currentProduct?.hsnCode || ''}
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  id="description"
-                  rows="3"
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                  defaultValue={currentProduct?.description || ''}
-                ></textarea>
-              </div>
-              <div className="flex justify-end space-x-3 mt-5">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit">
-                  {currentProduct ? 'Update' : 'Create'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <ProductModal
+          product={currentProduct}
+          categories={categories}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleFormSubmit}
+        />
       )}
+    </div>
+  );
+};
+
+// Product Modal Component
+const ProductModal = ({ product, categories, onClose, onSubmit }) => {
+  const [formData, setFormData] = useState({
+    name: product?.name || '',
+    description: product?.description || '',
+    category: product?.categoryId || '',
+    unit: product?.unit || '',
+    rate: product?.rate || 0,
+    gstPercentage: product?.gstPercentage || 0,
+    hsnCode: product?.hsnCode || '',
+    isActive: product?.isActive !== undefined ? product.isActive : true
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg max-w-lg w-full p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">
+          {product ? 'Edit Product' : 'Add New Product'}
+        </h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Product Name *
+              </label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                Category *
+              </label>
+              <select
+                name="category"
+                id="category"
+                required
+                value={formData.category}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              >
+                <option value="">Select Category</option>
+                {categories.map(cat => (
+                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
+                Unit *
+              </label>
+              <input
+                type="text"
+                name="unit"
+                id="unit"
+                required
+                value={formData.unit}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="rate" className="block text-sm font-medium text-gray-700">
+                Rate (₹) *
+              </label>
+              <input
+                type="number"
+                name="rate"
+                id="rate"
+                required
+                min="0"
+                step="0.01"
+                value={formData.rate}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="gstPercentage" className="block text-sm font-medium text-gray-700">
+                GST %
+              </label>
+              <input
+                type="number"
+                name="gstPercentage"
+                id="gstPercentage"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.gstPercentage}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="hsnCode" className="block text-sm font-medium text-gray-700">
+                HSN Code
+              </label>
+              <input
+                type="text"
+                name="hsnCode"
+                id="hsnCode"
+                value={formData.hsnCode}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea
+              name="description"
+              id="description"
+              rows="3"
+              value={formData.description}
+              onChange={handleChange}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              name="isActive"
+              id="isActive"
+              checked={formData.isActive}
+              onChange={handleChange}
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+              Active
+            </label>
+          </div>
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              {product ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

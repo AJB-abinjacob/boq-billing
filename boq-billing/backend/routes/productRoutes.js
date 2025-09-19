@@ -1,30 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const { authenticate, authorize } = require('../middleware/auth');
 
-// Import controllers (placeholder implementation)
-const productController = {
-  getAllProducts: (req, res) => {
-    res.json({ message: 'Get all products', data: [] });
-  },
-  getProductById: (req, res) => {
-    res.json({ message: 'Get product by ID', id: req.params.id });
-  },
-  createProduct: (req, res) => {
-    res.json({ message: 'Create product', data: req.body });
-  },
-  updateProduct: (req, res) => {
-    res.json({ message: 'Update product', id: req.params.id, data: req.body });
-  },
-  deleteProduct: (req, res) => {
-    res.json({ message: 'Delete product', id: req.params.id });
-  }
-};
+// Import controllers
+const {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getProductsByCategory
+} = require('../controllers/productController');
 
-// Routes
-router.get('/', productController.getAllProducts);
-router.get('/:id', productController.getProductById);
-router.post('/', productController.createProduct);
-router.put('/:id', productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
+// Routes (authentication temporarily disabled for development)
+router.get('/', /* authenticate, */ getAllProducts);
+router.get('/:id', /* authenticate, */ getProductById);
+router.post('/', /* authenticate, authorize(['admin']), */ createProduct);
+router.put('/:id', /* authenticate, authorize(['admin']), */ updateProduct);
+router.delete('/:id', /* authenticate, authorize(['admin']), */ deleteProduct);
+router.get('/category/:categoryId', /* authenticate, */ getProductsByCategory);
 
 module.exports = router;

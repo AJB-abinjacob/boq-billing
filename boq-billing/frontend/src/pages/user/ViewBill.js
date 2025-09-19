@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { FiArrowLeft, FiDownload, FiPrinter } from 'react-icons/fi';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 import { exportBillAsPDF } from '../../utils/pdfExport';
-import BillService from '../../services/billService';
 
 const ViewBill = () => {
   const { id } = useParams();
